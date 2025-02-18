@@ -23,6 +23,7 @@ openai==1.63.0
 psycopg2-binary==2.9.10
 pydantic==2.10.6
 pydantic_core==2.27.2
+PyJWT==2.10.1
 python-dateutil==2.9.0.post0
 python-dotenv==1.0.1
 python-multipart==0.0.20
