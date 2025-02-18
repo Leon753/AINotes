@@ -1,0 +1,55 @@
+# 🏗 Python-related files
+__pycache__/
+*.py[cod]
+*.so
+*.pyo
+*.pyd
+venv/
+.env
+*.sqlite3
+db.sqlite3
+
+# 📦 Dependency files
+Pipfile
+Pipfile.lock
+poetry.lock
+*.egg-info/
+*.log
+
+# 🚀 Environment variables
+.env
+*.secret
+.env.local
+.env.production
+.env.development
+
+# 📂 Database & Migrations
+migrations/
+alembic.ini
+instance/
+*.db
+*.sql
+dump.rdb
+
+# 🔒 AWS Credentials (NEVER COMMIT AWS KEYS!)
+.aws/
+aws-credentials
+config.json
+
+# 🐳 Docker
+docker-compose.yml
+Dockerfile
+*.dockerfile
+*.tar
+docker-compose.override.yml
+
+# 📡 Cloud Configs
+terraform.tfstate
+terraform.tfstate.backup
+.idea/
+.vscode/
+
+# 🖼️ Media & Uploads (avoid storing uploaded files in Git)
+uploads/
+media/
+static/
