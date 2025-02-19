@@ -133,11 +133,21 @@ async def transcribe_audio(file: UploadFile = File(...), db: AsyncSession = Depe
 
         if not transcript.text:
             raise HTTPException(status_code=500, detail="Transcription returned empty text.")
+        
+        response = client.chat.completions.create(
+            model="gpt-4-turbo",
+            messages=[
+                {"role": "system", "content": "Summarize this transcript into bullet points."},
+                {"role": "user", "content": transcript.text}
+            ]
+        )
+        summary = response.choices[0].message.content
+        print("SUMMARY: ", summary)
 
         print(f"Transcription successful: {transcript.text}")
 
         # ✅ Save transcription to database
-        new_note = Note(filename=file.filename, file_url=file_url, transcription=transcript.text)
+        new_note = Note(filename=file.filename, file_url=file_url, transcription=summary)
         db.add(new_note)
         await db.commit()
         await db.refresh(new_note)
@@ -145,7 +155,7 @@ async def transcribe_audio(file: UploadFile = File(...), db: AsyncSession = Depe
         return {
             "file_url": file_url,
             "filename": file.filename,
-            "transcription": transcript.text
+            "transcription": summary
         }
 
     except Exception as e:

@@ -7,7 +7,7 @@ from auth import generate_guest_token, verify_token
 app = FastAPI(title="AI Notes", description="AI-powered note-taking assistant", version="1.0.0")
 
 app.include_router(notes.router, prefix="/api", tags=["notes"],dependencies=[Depends(verify_token)])
-app.include_router(upload.router, prefix="/files", tags=["uploads"],dependencies=[Depends(verify_token)])
+app.include_router(upload.router, prefix="/files", tags=["upload"],dependencies=[Depends(verify_token)])
 
 
 app.add_middleware(

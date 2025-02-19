@@ -78,7 +78,6 @@ async def download_file(file_id: int, db: AsyncSession = Depends(get_db)):
     file = await db.get(Note, file_id)
     if not file:
         raise HTTPException(status_code=404, detail="File not found")
-
     try:
         presigned_url = s3_client.generate_presigned_url(
             "get_object",
