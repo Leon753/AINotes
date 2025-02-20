@@ -2,7 +2,7 @@ from fastapi import Depends, FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 from routes import notes, upload
 from auth import router as auth_router
-from auth import generate_guest_token, verify_token
+from auth import verify_token
 
 
 app = FastAPI(title="AI Notes", description="AI-powered note-taking assistant", version="1.0.0")
@@ -19,11 +19,6 @@ app.add_middleware(
     allow_methods=["*"],
     allow_headers=["*"],
 )
-
-@app.get("/get-token/")
-def get_guest_token():
-    token = generate_guest_token()
-    return {"token": token}
 
 # Root endpoint
 @app.get("/")
