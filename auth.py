@@ -2,8 +2,11 @@ import uuid
 import jwt
 import datetime
 import os
+from dotenv import load_dotenv
 from fastapi import APIRouter, HTTPException, Header, Security
 from fastapi.security import HTTPBearer, HTTPAuthorizationCredentials
+
+load_dotenv()
 
 SECRET_KEY = os.getenv("SECRET_KEY")
 
