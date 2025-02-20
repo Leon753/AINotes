@@ -1,3 +1,4 @@
+import uuid
 import jwt
 import datetime
 import os
@@ -12,24 +13,27 @@ router = APIRouter()
 # ✅ Function to generate a guest token
 def generate_guest_token():
     expiration = datetime.datetime.utcnow() + datetime.timedelta(hours=12)  # Expires in 1 hour
-    payload = {"exp": expiration}
+    payload = {"user_id": str(uuid.uuid4()), "exp": expiration}
     token = jwt.encode(payload, SECRET_KEY, algorithm="HS256")
     return token
 
 # ✅ Middleware function to verify token in requests
 def verify_token(credentials: HTTPAuthorizationCredentials = Security(security)):
-    token = credentials.credentials
+    token = credentials.credentials  # Keep the token for frontend storage
     if not token:
         raise HTTPException(status_code=401, detail="Token required")
     
     try:
-        jwt.decode(token, SECRET_KEY, algorithms=["HS256"])
+        payload = jwt.decode(token, SECRET_KEY, algorithms=["HS256"])
+        user_id = payload.get("user_id")  # Extract user_id from JWT payload
+        if not user_id:
+            raise HTTPException(status_code=401, detail="Invalid token: missing user_id")
     except jwt.ExpiredSignatureError:
         raise HTTPException(status_code=401, detail="Token expired")
     except jwt.InvalidTokenError:
         raise HTTPException(status_code=401, detail="Invalid token")
 
-    return token  # Token is valid, proceed
+    return {"token": token, "user_id": user_id} 
 
 # API Route for Generating Guest Token
 @router.post("/generate-token")

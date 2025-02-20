@@ -8,3 +8,4 @@ class Note(Base):
     filename = Column(String, unique=True, nullable=False)
     file_url = Column(String, nullable=False)
     transcription = Column(Text, nullable=True)
+    user_id = Column(String, index=True) 

@@ -6,6 +6,7 @@ import openai
 from fastapi import APIRouter, Depends, File, HTTPException, UploadFile
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.future import select
+from auth import verify_token
 from models import Note
 from database import get_db
 from pydantic import BaseModel
@@ -40,9 +41,15 @@ async def create_note(note: NoteCreate, db: AsyncSession = Depends(get_db)):
     return new_note
 
 @router.get("/notes/")
-async def get_notes(db: AsyncSession = Depends(get_db)):
-    result = await db.execute(select(Note))
-    return result.scalars().all()
+async def get_notes(
+    db: AsyncSession = Depends(get_db), 
+    auth_data: dict = Depends(verify_token)
+):
+    user_id = auth_data.get("user_id")  # Extract user_id
+    result = await db.execute(select(Note).where(Note.user_id == user_id))
+    notes = result.scalars().all()
+
+    return notes
 
 @router.get("/notes/{note_id}")
 async def get_note(note_id: int, db: AsyncSession = Depends(get_db)):
@@ -90,42 +97,29 @@ async def delete_note(note_id: int, db: AsyncSession = Depends(get_db)):
     return {"message": "Note and associated file deleted successfully"}
 
 @router.post("/transcribe/")
-async def transcribe_audio(file: UploadFile = File(...), db: AsyncSession = Depends(get_db)):
+async def transcribe_audio(file: UploadFile = File(...), db: AsyncSession = Depends(get_db), auth_data: str = Depends(verify_token)):
     try:
         file_ext = file.filename.split(".")[-1].lower()
 
-        # Validate supported formats
         allowed_formats = {"flac", "m4a", "mp3", "mp4", "mpeg", "mpga", "oga", "ogg", "wav", "webm"}
         if file_ext not in allowed_formats:
             raise HTTPException(status_code=400, detail="Unsupported file format. Please upload an MP3, WAV, or other supported format.")
 
         file_key = f"{uuid.uuid4()}.{file_ext}"
-        print(f"Uploading {file.filename} to S3 as {file_key}")
-
-        # ✅ Read file into memory first
         file_bytes = await file.read()
 
         if not file_bytes:
             raise HTTPException(status_code=400, detail="Error: File is empty after reading.")
 
-        print(f"File size: {len(file_bytes)} bytes")
-
-        # ✅ Convert file bytes to a BytesIO stream (so it stays open)
         file_obj = io.BytesIO(file_bytes)
 
-        # ✅ Upload file to S3 (using in-memory file stream)
         s3_client.upload_fileobj(file_obj, S3_BUCKET_NAME, file_key)
         file_url = f"https://{S3_BUCKET_NAME}.s3.{AWS_REGION}.amazonaws.com/{file_key}"
-        print(f"File successfully uploaded to {file_url}")
 
-        # ✅ Recreate the BytesIO stream before sending to Whisper
         file_obj = io.BytesIO(file_bytes)
 
-        # ✅ Get content type (MIME type) from UploadFile
         content_type = file.content_type or "audio/mpeg"  # Default to MP3 MIME type if unknown
 
-        # ✅ Transcribe with OpenAI Whisper
-        print("Sending file to OpenAI Whisper...")
         transcript = client.audio.transcriptions.create(
             model="whisper-1",
             file=("audio." + file_ext, file_obj, content_type)  # Ensure correct file format
@@ -142,12 +136,8 @@ async def transcribe_audio(file: UploadFile = File(...), db: AsyncSession = Depe
             ]
         )
         summary = response.choices[0].message.content
-        print("SUMMARY: ", summary)
 
-        print(f"Transcription successful: {transcript.text}")
-
-        # ✅ Save transcription to database
-        new_note = Note(filename=file.filename, file_url=file_url, transcription=summary)
+        new_note = Note(filename=file.filename, file_url=file_url, transcription=summary, user_id=auth_data.get("user_id"))
         db.add(new_note)
         await db.commit()
         await db.refresh(new_note)
@@ -155,7 +145,8 @@ async def transcribe_audio(file: UploadFile = File(...), db: AsyncSession = Depe
         return {
             "file_url": file_url,
             "filename": file.filename,
-            "transcription": summary
+            "transcription": summary,
+            "user_id": auth_data.get("user_id")
         }
 
     except Exception as e:
