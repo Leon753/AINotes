@@ -51,31 +51,15 @@ async def get_notes(
 
     return notes
 
-@router.get("/notes/{note_id}")
-async def get_note(note_id: int, db: AsyncSession = Depends(get_db)):
-    note = await db.get(Note, note_id)
-    if not note:
-        raise HTTPException(status_code=404, detail="Note not found")
-    return note
-
-@router.put("/notes/{note_id}")
-async def update_note(note_id: int, note_data: NoteCreate, db: AsyncSession = Depends(get_db)):
-    note = await db.get(Note, note_id)
-    if not note:
-        raise HTTPException(status_code=404, detail="Note not found")
-    
-    note.filename = note_data.filename
-    note.transcription = note_data.transcription
-    await db.commit()
-    await db.refresh(note)
-    return note
-
 @router.delete("/notes/{note_id}")
-async def delete_note(note_id: int, db: AsyncSession = Depends(get_db)):
+async def delete_note(note_id: int, db: AsyncSession = Depends(get_db), auth_data: dict = Depends(verify_token)):
     """Deletes a note and removes the associated audio file from S3."""
     note = await db.get(Note, note_id)
     if not note:
         raise HTTPException(status_code=404, detail="Note not found")
+
+    if note.user_id != auth_data.get("user_id"):
+        raise HTTPException(status_code=403, detail="Unauthorized to delete this note")
 
     # Extract file name from URL
     file_url = note.file_url
