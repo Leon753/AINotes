@@ -127,6 +127,7 @@ async def transcribe_audio(file: UploadFile = File(...), db: AsyncSession = Depe
         await db.refresh(new_note)
 
         return {
+            "id": new_note.id,
             "file_url": file_url,
             "filename": file.filename,
             "transcription": summary,
