@@ -1,5 +1,7 @@
 from database import Base  # Import from centralized location
-from sqlalchemy import Column, Integer, String, Text
+from sqlalchemy import Column, Integer, String, Text, DateTime
+from sqlalchemy.sql import func
+
 
 class Note(Base):
     __tablename__ = "notes"
@@ -9,3 +11,4 @@ class Note(Base):
     file_url = Column(String, nullable=False)
     transcription = Column(Text, nullable=True)
     user_id = Column(String, index=True) 
+    created_at = Column(DateTime, server_default=func.now())
