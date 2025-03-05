@@ -1,8 +1,8 @@
 import datetime
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.future import select
-from database import get_db
-from models import Note
+from database.session import get_db
+from models.note import Note
 from dotenv import load_dotenv
 import boto3
 import asyncio

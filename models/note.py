@@ -1,4 +1,4 @@
-from database import Base  # Import from centralized location
+from database.session import Base  # Import from centralized location
 from sqlalchemy import Column, Integer, String, Text, DateTime
 from sqlalchemy.sql import func
 

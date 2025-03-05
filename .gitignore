@@ -4,3 +4,4 @@ venv/
 .env
 alembic.ini
 *.pem
+cleanup_log.txt*

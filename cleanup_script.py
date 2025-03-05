@@ -1,5 +1,5 @@
 import asyncio
-from database import AsyncSessionLocal
+from database.session import AsyncSessionLocal
 from cleanup import cleanup_old_notes
 
 async def run_cleanup():
