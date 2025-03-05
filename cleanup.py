@@ -9,7 +9,6 @@ import asyncio
 import os
 
 load_dotenv()
-# ✅ Setup S3 client
 S3_BUCKET_NAME = os.getenv("S3_BUCKET_NAME")
 s3_client = boto3.client("s3")
 
@@ -24,11 +23,11 @@ async def cleanup_old_notes(db: AsyncSession):
         try:
             file_key = note.file_url.split("/")[-1]  # Extract file key
             s3_client.delete_object(Bucket=S3_BUCKET_NAME, Key=file_key)  # Delete from S3
-            print(f"✅ Deleted {file_key} from S3")
+            print(f"Deleted {file_key} from S3")
 
             await db.delete(note)  # Delete from DB
         except Exception as e:
-            print(f"❌ Error deleting {file_key}: {e}")
+            print(f"Error deleting {file_key}: {e}")
 
     await db.commit()
-    print("✅ Cleanup completed!")
+    print("Cleanup completed!")

@@ -5,9 +5,9 @@ from fastapi import APIRouter, Depends, File, HTTPException, UploadFile
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.future import select
 
-from auth.auth import verify_token
-from database.session import get_db
-from models.note import Note
+from auth import verify_token
+from database import get_db
+from models import Note
 from services import s3_service, transcription_service
 
 
@@ -35,20 +35,12 @@ async def delete_note(
     if note.user_id != auth_data.get("user_id"):
         raise HTTPException(status_code=403, detail="Unauthorized to delete this note")
     
-    # If it's the demo note, we delete only from the database
-    if "demo-intro.mp3" in note.file_url:
-        await db.delete(note)
-        await db.commit()
-        return {"message": "Demo note deleted successfully"}
-    
-    # Extract file key from the S3 URL (assuming the key is the last part of the URL)
     file_key = note.file_url.split("/")[-1]
     try:
         s3_service.delete_file_from_s3(file_key)
     except Exception as e:
         raise HTTPException(status_code=500, detail="Error deleting file from S3")
     
-    # Delete from database
     await db.delete(note)
     await db.commit()
     return {"message": "Note and associated file deleted successfully"}
@@ -70,16 +62,13 @@ async def transcribe_audio(
         if not file_bytes:
             raise HTTPException(status_code=400, detail="File is empty.")
         
-        # Create two separate BytesIO objects
         file_obj_s3 = io.BytesIO(file_bytes)
         file_obj_transcribe = io.BytesIO(file_bytes)
         
-        # Upload the file to S3 using the first file object
         file_url = s3_service.upload_fileobj_to_s3(file_obj_s3, file_key)
         
         content_type = file.content_type or "audio/mpeg"
         
-        # Use the second file object for transcription
         transcript_text = transcription_service.transcribe_audio_file(
             file_obj_transcribe, f"audio.{file_ext}", content_type
         )

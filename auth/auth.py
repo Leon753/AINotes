@@ -13,7 +13,7 @@ SECRET_KEY = os.getenv("SECRET_KEY")
 security = HTTPBearer() 
 router = APIRouter()
 
-# ✅ Middleware function to verify token in requests
+# Middleware function to verify token in requests
 def verify_token(credentials: HTTPAuthorizationCredentials = Security(security)):
     token = credentials.credentials  # Keep the token for frontend storage
     if not token:
